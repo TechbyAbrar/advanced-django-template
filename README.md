@@ -1,3 +1,5 @@
+Note: Function Based Views (FBV) are used to make this project.
+
 🔐 Django Authentication System with JWT, Email OTP, and User Management
 This project is a robust and secure user authentication system built with Django Rest Framework and Simple JWT.
 It provides a clean, scalable API-based backend that supports full user authentication flow,
