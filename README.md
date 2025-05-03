@@ -30,5 +30,5 @@ Foundations for SaaS platforms, portals, and marketplaces
 
 🌐 API Highlights
 Each endpoint is designed to be RESTful, easy to integrate, and secure. JWT tokens are used for session management, and email OTP verification adds an extra layer of security at signup.
-This project provides a production-ready foundation for any Django-based application where user authentication and security are key priorities.
+This project provides a production-ready foundation for any Django-based application where user authentication and security are key priorities. OOP, Clean Code, Code Readability, DRY principle.
 
