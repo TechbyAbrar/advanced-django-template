@@ -13,14 +13,17 @@ from authentication.utils import normalize_phone
 # CONSTANTS
 # =============================================================================
 
-_OTP_PURPOSE_CHOICES: tuple[str, ...] = (
-    "email_verify",
-    "phone_verify",
-    "password_reset",
-    "two_factor",
+_PHONE_REGEX = re.compile(r"^\+\d{9,15}$")             # compiled once at import
+
+_OTP_PURPOSE_CHOICES: tuple[tuple[str, str], ...] = (
+    ("email_verify",   "Email Verification"),
+    ("phone_verify",   "Phone Verification"),
+    ("password_reset", "Password Reset"),
+    ("two_factor",     "Two Factor Auth"),
 )
 
-_PHONE_REGEX = re.compile(r"^\+\d{9,15}$")
+# pre-compiled phone detection — starts with + or contains only digits/spaces/dashes
+_PHONE_DETECT_REGEX = re.compile(r"^[\+\d\s\-\(\)\.]+$")
 
 
 # =============================================================================
@@ -30,7 +33,7 @@ _PHONE_REGEX = re.compile(r"^\+\d{9,15}$")
 def _validate_password_strength(value: str) -> str:
     """
     Shared password strength validator.
-    Used across Register, PasswordChange, PasswordResetConfirm.
+    Used by Register, PasswordChange, PasswordResetConfirm.
     """
     if value.isdigit():
         raise serializers.ValidationError(
@@ -45,8 +48,8 @@ def _validate_password_strength(value: str) -> str:
 
 def _validate_phone_format(value: str) -> str:
     """
-    Normalize then validate phone.
-    Shared across any serializer that accepts phone input.
+    Normalize then validate.
+    Never validate raw input — always normalize first.
     """
     normalized = normalize_phone(value)
     if not _PHONE_REGEX.match(normalized):
@@ -54,6 +57,30 @@ def _validate_phone_format(value: str) -> str:
             "Phone number must be valid (e.g. +8801711000000)."
         )
     return normalized
+
+
+def _normalize_identifier(value: str) -> str:
+    """
+    Normalize identifier at serializer boundary before hitting backend.
+
+    Detection order:
+    1. Matches phone pattern  → normalize_phone()
+    2. Contains @             → email  → lowercase + strip
+    3. Anything else          → username → lowercase + strip
+
+    This ensures Q(phone=identifier) exact match always works in views.
+    """
+    stripped = value.strip()
+
+    if _PHONE_DETECT_REGEX.match(stripped):             # ✅ fixed phone detection
+        try:
+            normalized = normalize_phone(stripped)
+            if _PHONE_REGEX.match(normalized):          # only if valid E.164
+                return normalized
+        except Exception:
+            pass                                        # fall through to email/username
+
+    return stripped.lower()                             # email or username
 
 
 # =============================================================================
@@ -73,7 +100,7 @@ class RegisterSerializer(serializers.Serializer):
         write_only=True,
         min_length=8,
         max_length=128,
-        trim_whitespace=False,                  # never trim passwords
+        trim_whitespace=False,                          # never trim passwords
     )
 
     def validate_phone(self, value: str) -> str:
@@ -105,6 +132,9 @@ class LoginSerializer(serializers.Serializer):
         trim_whitespace=False,
     )
 
+    def validate_identifier(self, value: str) -> str:
+        return _normalize_identifier(value)
+
 
 # =============================================================================
 # OTP
@@ -116,6 +146,9 @@ class OTPSendSerializer(serializers.Serializer):
         trim_whitespace=True,
     )
     purpose    = serializers.ChoiceField(choices=_OTP_PURPOSE_CHOICES)
+
+    def validate_identifier(self, value: str) -> str:
+        return _normalize_identifier(value)
 
 
 class OTPVerifySerializer(serializers.Serializer):
@@ -129,6 +162,14 @@ class OTPVerifySerializer(serializers.Serializer):
         trim_whitespace=True,
     )
     purpose    = serializers.ChoiceField(choices=_OTP_PURPOSE_CHOICES)
+
+    def validate_identifier(self, value: str) -> str:
+        return _normalize_identifier(value)
+
+    def validate_otp(self, value: str) -> str:
+        if not value.isdigit():
+            raise serializers.ValidationError("OTP must be numeric.")
+        return value
 
 
 # =============================================================================
@@ -152,7 +193,7 @@ class PasswordChangeSerializer(serializers.Serializer):
         return _validate_password_strength(value)
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
-        if attrs["old_password"] == attrs["new_password"]:
+        if attrs.get("old_password") == attrs.get("new_password"):
             raise serializers.ValidationError(
                 "New password must be different from old password."
             )
@@ -164,6 +205,9 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         max_length=255,
         trim_whitespace=True,
     )
+
+    def validate_identifier(self, value: str) -> str:
+        return _normalize_identifier(value)
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
@@ -182,6 +226,14 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         max_length=128,
         trim_whitespace=False,
     )
+
+    def validate_identifier(self, value: str) -> str:
+        return _normalize_identifier(value)
+
+    def validate_otp(self, value: str) -> str:
+        if not value.isdigit():
+            raise serializers.ValidationError("OTP must be numeric.")
+        return value
 
     def validate_new_password(self, value: str) -> str:
         return _validate_password_strength(value)
