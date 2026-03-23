@@ -1,10 +1,12 @@
 # authentication/utils.py
 
+from __future__ import annotations
+
 import logging
-import random
 import re
+import secrets
 import string
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -21,11 +23,10 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 def generate_otp(length: int = 6) -> str:
-    import secrets
     return "".join(secrets.choice(string.digits) for _ in range(length))
 
 
-def get_otp_expiry(minutes: int = 10) -> timezone.datetime:
+def get_otp_expiry(minutes: int = 10) -> datetime:       # ✅ correct type hint
     return timezone.now() + timedelta(minutes=minutes)
 
 
@@ -50,7 +51,10 @@ def send_otp_email(recipient_email: str, otp: str) -> bool:
     try:
         send_mail(
             subject="Your Verification Code",
-            message=f"Your OTP is: {otp}\nThis code expires in 10 minutes. Do not share it.",
+            message=(
+                f"Your OTP is: {otp}\n"
+                f"This code expires in 10 minutes. Do not share it."
+            ),
             from_email=_get_from_email(),
             recipient_list=[recipient_email],
             fail_silently=False,
@@ -81,10 +85,18 @@ def generate_tokens(user) -> dict[str, str]:
 # USERNAME
 # =============================================================================
 
-def generate_username(email: str) -> str:
-    import secrets
-    base   = re.sub(r"[^a-z0-9]", "", email.split("@")[0].lower())[:8]
-    suffix = "".join(secrets.choice(string.ascii_lowercase + string.digits) for _ in range(4))
+def generate_username(identifier: str) -> str:          # ✅ renamed from email → identifier
+    """
+    Generate username from email or phone.
+    - Email: takes part before @
+    - Phone: strips non-alphanumeric chars
+    Both: lowercased, max 8 chars + 4 char random suffix
+    """
+    base = re.sub(r"[^a-z0-9]", "", identifier.split("@")[0].lower())[:8]
+    suffix = "".join(
+        secrets.choice(string.ascii_lowercase + string.digits)
+        for _ in range(4)
+    )
     return f"{base}_{suffix}"
 
 
@@ -93,5 +105,10 @@ def generate_username(email: str) -> str:
 # =============================================================================
 
 def normalize_phone(phone: str) -> str:
-    phone = re.sub(r"[\s\-\(\)]", "", phone.strip())
+    """
+    Normalize phone to E.164 format.
+    Strips: spaces, dashes, parentheses, dots
+    Ensures: + prefix
+    """
+    phone = re.sub(r"[\s\-\(\)\.]", "", phone.strip())  # ✅ added dot stripping
     return phone if phone.startswith("+") else f"+{phone}"
