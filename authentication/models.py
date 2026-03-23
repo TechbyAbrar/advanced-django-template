@@ -46,15 +46,10 @@ class UserAuth(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = _("User Auths")
         ordering            = ["-created_at"]
         indexes = [
-            models.Index(fields=["email"],    name="idx_userauth_email"),
-            models.Index(fields=["phone"],    name="idx_userauth_phone"),
-            models.Index(fields=["username"], name="idx_userauth_username"),
-            models.Index(fields=["is_active"], name="idx_userauth_is_active"),
-            models.Index(fields=["is_online"], name="idx_userauth_is_online"),
-            models.Index(fields=["is_staff", "is_active"], name="idx_userauth_staff_active"),
-            models.Index(fields=["last_activity"], name="idx_userauth_last_activity"),
-            models.Index(fields=["created_at"],    name="idx_userauth_created_at"),
-            models.Index(fields=["is_active", "is_online", "last_activity"], name="idx_userauth_active_online_activity"),
+            models.Index(fields=["email"],      name="idx_ua_email"),
+            models.Index(fields=["phone"],      name="idx_ua_phone"),
+            models.Index(fields=["username"],   name="idx_ua_username"),
+            models.Index(fields=["created_at"], name="idx_ua_created_at"),
         ]
 
     def __str__(self) -> str:
