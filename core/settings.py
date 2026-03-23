@@ -55,15 +55,16 @@ INSTALLED_APPS = [
     'channels',
     
     # local apps
+    "authentication",
 ]
 
 
-# AUTH_USER_MODEL = 'accounts.UserAuth'
+AUTH_USER_MODEL = 'authentication.UserAuth'
 
-# AUTHENTICATION_BACKENDS = [
-#     "accounts.backends.EmailPhoneUsernameBackend",   #custom autenticator
-#     "django.contrib.auth.backends.ModelBackend",  # fallback
-# ]
+AUTHENTICATION_BACKENDS = [
+    "authentication.backends.EmailPhoneUsernameBackend",  #custom autenticator
+    # "django.contrib.auth.backends.ModelBackend",  # fallback
+]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # CORS first
