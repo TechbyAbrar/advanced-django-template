@@ -165,6 +165,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework & JWT
 # ---------------------------
 REST_FRAMEWORK = {
+     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",  # for drf-spectacular
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -200,11 +201,10 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Spectacular Swagger settings
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Your Project API',
-    'DESCRIPTION': 'Your project description',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    # OTHER SETTINGS
+    "TITLE": "My API",
+    "DESCRIPTION": "Authentication API",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 # Logging Configuration

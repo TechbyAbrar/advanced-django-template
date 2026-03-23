@@ -7,7 +7,7 @@ from typing import Final
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.utils import timezone
 
@@ -182,80 +182,109 @@ def _consume_otp_atomic(
 # REGISTER
 # =============================================================================
 
-class RegisterView(APIView):
+class SignupView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request: Request) -> Response:
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        data:     dict[str, str] = serializer.validated_data
-        email:    str | None     = data.get("email")
-        phone:    str | None     = data.get("phone")
-        password: str            = data["password"]
+        data: dict[str, str] = serializer.validated_data
+        email: str | None = data.get("email")
+        phone: str | None = data.get("phone")
+        password: str = data["password"]
 
-        # --- O(1) duplicate check before any write ---
+        verification_channel: str = "email" if email else "phone"
+        otp_purpose: str = (
+            _PURPOSE_EMAIL_VERIFY if verification_channel == "email" else _PURPOSE_PHONE_VERIFY
+        )
+
         exists_q = Q()
         if email:
             exists_q |= Q(email__iexact=email)
         if phone:
             exists_q |= Q(phone=phone)
 
-        if User.objects.filter(exists_q).exists():
+        if exists_q and User.objects.filter(exists_q).exists():
             return Response(
-                {"detail": "User with this email or phone already exists."},
+                {
+                    "detail": "User with this email or phone already exists."
+                },
                 status=status.HTTP_409_CONFLICT,
             )
-
-        # --- DB writes inside atomic — email send OUTSIDE ---
-        otp:     str | None = None
-        purpose: str        = _PURPOSE_EMAIL_VERIFY if email else _PURPOSE_PHONE_VERIFY
 
         try:
             with transaction.atomic():
                 username: str = _generate_unique_username(email or phone)
 
-                user: AbstractBaseUser = User.objects.create_user(
+                user = User.objects.create_user(
                     email=email,
                     phone=phone,
                     username=username,
                     password=password,
                 )
 
-                # --- create OTP record inside atomic, get raw OTP back ---
-                otp = _create_otp_record(user, purpose)
+                otp: str = _create_otp_record(user, otp_purpose)
 
-        except RuntimeError as e:
-            logger.error("Username generation failed — %s", str(e))
+                if verification_channel == "email" and email:
+                    transaction.on_commit(lambda: send_otp_email(email, otp))
+
+        except RuntimeError as exc:
+            logger.error(
+                "Signup failed during username generation — email: %s, phone: %s, error: %s",
+                email,
+                phone,
+                str(exc),
+            )
             return Response(
                 {"detail": "Registration failed. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+        except IntegrityError:
+            logger.warning(
+                "Signup conflict due to integrity constraint — email: %s, phone: %s",
+                email,
+                phone,
+            )
+            return Response(
+                {"detail": "User with this email or phone already exists."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
         except Exception:
-            logger.exception("Registration failed — email: %s", email)
+            logger.exception(
+                "Unexpected signup failure — email: %s, phone: %s",
+                email,
+                phone,
+            )
             return Response(
                 {"detail": "Registration failed. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        # --- send email AFTER atomic commits — never inside atomic ---
-        if email and otp:
-            send_otp_email(email, otp)
 
         tokens = generate_tokens(user)
-        logger.info("User registered — user_id: %s, username: %s", user.pk, user.username)
+
+        logger.info(
+            "User registered successfully — user_id: %s, username: %s, channel: %s",
+            user.pk,
+            user.username,
+            verification_channel,
+        )
 
         return Response(
             {
-                "detail":      "Registration successful. Please verify your account.",
-                "user_id":     user.pk,
-                "username":    user.username,
+                "detail": "Registration successful. Please verify your account.",
+                "user_id": user.pk,
+                "username": user.username,
+                "email": user.email,
+                "phone": user.phone,
+                "verification_channel": verification_channel,
                 "is_verified": user.is_verified,
-                "tokens":      tokens,
+                "tokens": tokens,
             },
             status=status.HTTP_201_CREATED,
         )
-
 
 # =============================================================================
 # LOGIN
