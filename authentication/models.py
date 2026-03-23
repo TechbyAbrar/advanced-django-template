@@ -69,3 +69,49 @@ class UserAuth(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs) -> None:
         self.clean()
         super().save(*args, **kwargs)
+
+
+
+class OTPVerification(models.Model):
+
+    class Purpose(models.TextChoices):
+        EMAIL_VERIFY   = "email_verify",   _("Email Verification")
+        PHONE_VERIFY   = "phone_verify",   _("Phone Verification")
+        PASSWORD_RESET = "password_reset", _("Password Reset")
+        TWO_FACTOR     = "two_factor",     _("Two Factor Auth")
+
+    user       = models.ForeignKey(
+        UserAuth,
+        on_delete=models.CASCADE,
+        related_name="otp_records",
+    )
+    code       = models.CharField(max_length=6)
+    purpose    = models.CharField(
+        max_length=20,
+        choices=Purpose.choices,
+    )
+    is_used    = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name        = _("OTP Verification")
+        verbose_name_plural = _("OTP Verifications")
+        unique_together     = ("user", "purpose")
+        indexes = [
+            models.Index(
+                fields=["user", "purpose", "is_used"],
+                name="idx_otp_user_purpose_used",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} — {self.purpose}"
+
+    def is_valid(self) -> bool:
+        return not self.is_used and timezone.now() < self.expires_at
+
+    def consume(self) -> None:
+        self.is_used = True
+        self.save(update_fields=["is_used"])
+        logger.debug("OTP consumed — user_id: %s, purpose: %s", self.user_id, self.purpose)
