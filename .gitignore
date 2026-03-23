@@ -1,2 +1,130 @@
-payments/
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# =========================
+# Virtual Environments
+# =========================
+venv/
 env/
+ENV/
+.venv/
+
+# =========================
+# Django
+# =========================
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# If you use staticfiles collect
+staticfiles/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+*.env
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Testing / Coverage
+# =========================
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# =========================
+# Type Checking / Linting
+# =========================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# =========================
+# Celery / Background Jobs
+# =========================
+celerybeat-schedule
+celerybeat.pid
+
+# =========================
+# Logs & Runtime Files
+# =========================
+*.log
+logs/
+
+# =========================
+# Docker
+# =========================
+*.pid
+*.seed
+*.pid.lock
+docker-compose.override.yml
+
+# =========================
+# Node (if frontend exists)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Security / Secrets
+# =========================
+*.pem
+*.key
+*.crt
+*.csr
+
+# =========================
+# Backup Files
+# =========================
+*.bak
+*.backup
+*.old

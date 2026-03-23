@@ -10,24 +10,30 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
+import environ
 from pathlib import Path
-from decouple import config
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables
+
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+environ.Env.read_env(BASE_DIR / ".env")  # read .env
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-x+j8hgt_xoj88&ipewb2py7!@$8*#^&anf!xtpkx#giyen(_s('
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env('ALLOWED_HOSTS').split(',')
 
 
 # Application definition
@@ -39,41 +45,36 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]
-
-EXTERNAL_APPS = [
+    
+    # 3rd party apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist', #blacklist for logout
-    'accounts',
+    'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
-    # socailauth
-    # 'dj_rest_auth',
-    # 'dj_rest_auth.registration',
-    # 'allauth',
-    # 'allauth.account',
-    # 'allauth.socialaccount',
-    # 'allauth.socialaccount.providers.google',
-    # 'allauth.socialaccount.providers.facebook',
-    # 'allauth.socialaccount.providers.github',
-    'payments',
+    'corsheaders',
+    'channels',
+    
+    # local apps
 ]
 
 
-INSTALLED_APPS += EXTERNAL_APPS
+# AUTH_USER_MODEL = 'accounts.UserAuth'
 
-AUTH_USER_MODEL = 'accounts.UserAuth'
+# AUTHENTICATION_BACKENDS = [
+#     "accounts.backends.EmailPhoneUsernameBackend",   #custom autenticator
+#     "django.contrib.auth.backends.ModelBackend",  # fallback
+# ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # CORS first
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # WhiteNoise
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #0auth
-    # 'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -99,11 +100,14 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import dj_database_url
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse(
+        env('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True,
+        engine="django.contrib.gis.db.backends.postgis",
+    )
 }
 
 
@@ -141,23 +145,54 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
+# ---------------------------
+# REST Framework & JWT
+# ---------------------------
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
 }
+
+
+
+SIMPLE_JWT = {
+    "USER_ID_FIELD": "user_id",  # use your PK field
+    "USER_ID_CLAIM": "user_id",  # key in JWT payload
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+
+# --------------------
+# CORS
+# --------------------
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 
 # Spectacular Swagger settings
@@ -169,42 +204,119 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
 }
 
+# Logging Configuration
 
-#Email Backend setup
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_PORT = config('EMAIL_PORT', cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
 
-#JWT CONFIG
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    "formatters": {
+        "default": {
+            "format": "[{asctime}] [{levelname}] {message}",
+            "style": "{",
+        },
+        "access": {
+            "format": "[{asctime}] {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "access_file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "level": "INFO",
+            "filename": LOG_DIR / "access.log",
+            "when": "D",          # rotate daily
+            "interval": 1,
+            "backupCount": 7,     # keep 7 days only
+            "formatter": "access",
+            "encoding": "utf-8",
+        },
+        "error_file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "level": "ERROR",
+            "filename": LOG_DIR / "error.log",
+            "when": "D",          # rotate daily
+            "interval": 1,
+            "backupCount": 7,     # keep 7 days only
+            "formatter": "default",
+            "encoding": "utf-8",
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "default",
+        },
+    },
+
+    "loggers": {
+        "django.server": {
+            "handlers": ["access_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["error_file", "console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "gunicorn.access": {
+            "handlers": ["access_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "gunicorn.error": {
+            "handlers": ["error_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+
+    "root": {
+        "handlers": ["error_file", "console"],
+        "level": "ERROR",
+    },
 }
 
-#SOCAILAUTH
-# SITE_ID = 1
 
-# AUTHENTICATION_BACKENDS = [
-#     'django.contrib.auth.backends.ModelBackend',
-#     'allauth.account.auth_backends.AuthenticationBackend',
-# ]
+# ---------------------
+# Redis Configuration
+# ---------------------
 
-# REST_USE_JWT = True
-# ACCOUNT_EMAIL_VERIFICATION = 'none'
-# ACCOUNT_AUTHENTICATION_METHOD = 'email'
-# ACCOUNT_EMAIL_REQUIRED = True
+# Redis for channel layers
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
-# REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
-#     'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
-# )
+# redis configuration
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",  # ✅ use django_redis backend
+        "LOCATION": "redis://127.0.0.1:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
+# ----------------------
+# smtp configuration
+# ----------------------
+# Email Configuration
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env('EMAIL_PORT', cast=int, default=587)
+EMAIL_USE_TLS = env('EMAIL_USE_TLS', cast=bool, default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+

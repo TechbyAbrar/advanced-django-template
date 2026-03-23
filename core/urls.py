@@ -20,14 +20,13 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/', include('accounts.urls')),
-    path('payments/', include('payments.urls')),
     # Schema endpoint
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-
-    # Optional UI
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/docs/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    
+    # local apps urls
+    
 ]
 
 
