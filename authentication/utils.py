@@ -26,10 +26,6 @@ def generate_otp(length: int = 6) -> str:
 
 
 def get_otp_expiry(minutes: int = 10) -> timezone.datetime:
-    """
-    Return OTP expiry timestamp.
-    Default reduced to 10 mins — 30 mins is too long for OTP security.
-    """
     return timezone.now() + timedelta(minutes=minutes)
 
 

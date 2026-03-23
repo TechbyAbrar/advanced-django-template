@@ -1,8 +1,9 @@
 import logging
-import re
 
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.utils.translation import gettext_lazy as _
+
+from authentication.utils import normalize_phone  # ← single source of truth
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +15,6 @@ class UserManager(BaseUserManager):
     @staticmethod
     def _normalize_username(username: str) -> str:
         return username.lower().strip()
-
-    @staticmethod
-    def _normalize_phone(phone: str) -> str:
-        phone = re.sub(r"[\s\-\(\)]", "", phone.strip())
-        return phone if phone.startswith("+") else f"+{phone}"
 
     # --- Core Creator ---
 
@@ -38,7 +34,7 @@ class UserManager(BaseUserManager):
             extra_fields["username"] = self._normalize_username(username)
 
         if phone := extra_fields.get("phone"):
-            extra_fields["phone"] = self._normalize_phone(phone)
+            extra_fields["phone"] = normalize_phone(phone)     # ← from utils
 
         extra_fields.setdefault("is_online", False)
 
@@ -61,7 +57,7 @@ class UserManager(BaseUserManager):
             "is_staff":     False,
             "is_superuser": False,
             "is_verified":  False,
-        } | extra_fields                        # PEP 584 — dict merge, extra_fields wins
+        } | extra_fields
 
         return self._create_user(email, password, **extra_fields)
 

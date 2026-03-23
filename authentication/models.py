@@ -7,13 +7,14 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .managers import UserManager
+from .utils import normalize_phone  
 
 logger = logging.getLogger(__name__)
 
 
 class UserAuth(AbstractBaseUser, PermissionsMixin):
 
-    user_id = models.BigAutoField(primary_key=True)
+    user_id  = models.BigAutoField(primary_key=True)
     email    = models.EmailField(unique=True, null=True, blank=True, db_index=True)
     phone    = models.CharField(
         max_length=15,
@@ -26,10 +27,10 @@ class UserAuth(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=50, unique=True, null=True, blank=True, db_index=True)
 
     is_verified  = models.BooleanField(default=False)
-    is_active    = models.BooleanField(default=True, db_index=True)
+    is_active    = models.BooleanField(default=True)
     is_staff     = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    is_online    = models.BooleanField(default=False, db_index=True)
+    is_online    = models.BooleanField(default=False)
 
     last_login    = models.DateTimeField(blank=True, null=True)
     last_activity = models.DateTimeField(blank=True, null=True)
@@ -60,21 +61,11 @@ class UserAuth(AbstractBaseUser, PermissionsMixin):
     def clean(self) -> None:
         if self.email:
             self.email = self.__class__.objects.normalize_email(self.email)
-
         if self.username:
             self.username = self.username.lower().strip()
-
         if self.phone:
-            self.phone = self._normalize_phone(self.phone)
+            self.phone = normalize_phone(self.phone) 
 
     def save(self, *args, **kwargs) -> None:
         self.clean()
         super().save(*args, **kwargs)
-
-    @staticmethod
-    def _normalize_phone(phone: str) -> str:
-        import re
-        phone = re.sub(r"[\s\-\(\)]", "", phone.strip())
-        if not phone.startswith("+"):
-            phone = "+" + phone
-        return phone
