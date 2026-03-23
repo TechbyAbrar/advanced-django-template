@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class UserAuth(AbstractBaseUser, PermissionsMixin):
 
-    user_id  = models.AutoField(primary_key=True)
+    user_id = models.BigAutoField(primary_key=True)
     email    = models.EmailField(unique=True, null=True, blank=True, db_index=True)
     phone    = models.CharField(
         max_length=15,
@@ -63,7 +63,6 @@ class UserAuth(AbstractBaseUser, PermissionsMixin):
     # --- Normalization ---
 
     def clean(self) -> None:
-        """Normalize all identifiers before validation."""
         if self.email:
             self.email = self.__class__.objects.normalize_email(self.email)
 
@@ -74,7 +73,6 @@ class UserAuth(AbstractBaseUser, PermissionsMixin):
             self.phone = self._normalize_phone(self.phone)
 
     def save(self, *args, **kwargs) -> None:
-        """Always run clean() before saving."""
         self.clean()
         super().save(*args, **kwargs)
 

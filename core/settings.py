@@ -66,6 +66,8 @@ AUTHENTICATION_BACKENDS = [
     # "django.contrib.auth.backends.ModelBackend",  # fallback
 ]
 
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # CORS first
     'django.middleware.security.SecurityMiddleware',
