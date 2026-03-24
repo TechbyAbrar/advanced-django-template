@@ -127,11 +127,7 @@ def _create_otp_record(
     user: AbstractBaseUser,
     purpose: str,
 ) -> str:
-    """
-    Create or update OTPVerification record atomically.
-    Returns raw OTP string — caller handles sending.
-    Separated from sending so email never runs inside atomic block.
-    """
+
     otp = generate_otp()
 
     OTPVerification.objects.update_or_create(
@@ -577,10 +573,15 @@ class PasswordChangeView(APIView):
                 {"detail": "Password change failed. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+            
+        tokens = generate_tokens(user)
 
         logger.info("Password changed — user_id: %s", user.pk)
         return Response(
-            {"detail": _MSG_PASSWORD_CHANGED},
+            {
+                "detail": _MSG_PASSWORD_CHANGED,
+                "tokens": tokens['access']
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -673,8 +674,11 @@ class PasswordResetConfirmView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+        token = generate_tokens(user)
+        
         logger.info("Password reset — user_id: %s", user.pk)
         return Response(
-            {"detail": _MSG_PASSWORD_RESET},
+            {"detail": _MSG_PASSWORD_RESET,
+             "tokens": token['access']},
             status=status.HTTP_200_OK,
         )

@@ -22,11 +22,11 @@ urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
 
-    path("otp/send/", OTPSendView.as_view(), name="otp-send"),
+    path("otp/send/", OTPSendView.as_view(), name="otp-send"),      # handle - email, phone , password reset, 2FA etc based on request data
     path("otp/verify/", OTPVerifyView.as_view(), name="otp-verify"),
 
-    path("verify/email/", EmailVerifyView.as_view(), name="email-verify"),
-    path("verify/phone/", PhoneVerifyView.as_view(), name="phone-verify"),
+    # path("verify/email/", EmailVerifyView.as_view(), name="email-verify"),    # future feature if need separation
+    # path("verify/phone/", PhoneVerifyView.as_view(), name="phone-verify"),    # future feature if need separation
 
     path("password/change/", PasswordChangeView.as_view(), name="password-change"),
     path("password/reset/request/", PasswordResetRequestView.as_view(), name="password-reset-request"),
