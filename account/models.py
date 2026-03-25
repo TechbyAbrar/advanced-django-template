@@ -32,7 +32,6 @@ class Account(models.Model):
         db_index=False,         
     )
 
-
     first_name   = models.CharField(max_length=64,  blank=True, default="")
     last_name    = models.CharField(max_length=64,  blank=True, default="")
     display_name = models.CharField(max_length=100, blank=True, default="", db_index=True)
@@ -45,8 +44,8 @@ class Account(models.Model):
     date_of_birth = models.DateField(null=True, blank=True)
     country       = models.CharField(max_length=64, blank=True, default="")
 
-    language = models.CharField(max_length=10, default="en")
-    timezone = models.CharField(max_length=64, default="UTC")
+    user_language = models.CharField(max_length=10, default="en")
+    user_timezone = models.CharField(max_length=64, default="UTC")
 
     preferences = models.JSONField(default=default_preferences)
 

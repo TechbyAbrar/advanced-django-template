@@ -54,8 +54,11 @@ INSTALLED_APPS = [
     'corsheaders',
     'channels',
     
+    'chat',  # chat app
+    
     # local apps
     "authentication",
+    "account",
 ]
 
 
@@ -97,8 +100,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
-
+# WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = "core.asgi.application"   # adjust to your project layout
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -165,7 +168,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework & JWT
 # ---------------------------
 REST_FRAMEWORK = {
-     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",  # for drf-spectacular
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",  # for drf-spectacular
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -173,30 +176,41 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 20,
+    "PAGE_SIZE": 30,
 }
 
 
 
 SIMPLE_JWT = {
-    "USER_ID_FIELD": "user_id",  # use your PK field
-    "USER_ID_CLAIM": "user_id",  # key in JWT payload
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME":  timedelta(hours=2),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS":  True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": "CHANGE-ME-IN-PRODUCTION",   # use SECRET_KEY in real settings
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "user_id",
+    "USER_ID_CLAIM": "user_id",
 }
 
 
 # --------------------
 # CORS
 # --------------------
-CORS_ALLOW_ALL_ORIGINS = True
+
+# CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+SOCKETIO_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 
 # Spectacular Swagger settings
@@ -323,3 +337,10 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+
+#socketio configuration
+
+SOCKETIO_REDIS_URL = "redis://localhost:6379/1"
+
+FILE_UPLOAD_MAX_MEMORY_SIZE    = 52_428_800   # 50 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE    = 52_428_800

@@ -29,6 +29,8 @@ urlpatterns = [
     
     # local apps urls
     path('v1/auth/', include('authentication.urls')),
+    path('v1/account/', include('account.urls')),
+    path('v1/chat/', include('chat.urls')),
 ]
 
 if settings.DEBUG:
