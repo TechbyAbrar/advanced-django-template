@@ -54,9 +54,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'channels',
     
-    'chat',  # chat app
+      # chat app
     
     # local apps
+    'chat',
     "authentication",
     "account",
 ]

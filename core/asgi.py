@@ -1,33 +1,4 @@
-# import os
-
-# from django.core.asgi import get_asgi_application
-
-# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-
-# application = get_asgi_application()
-
-
-
-"""
-asgi.py
-=======
-ASGI entry point that mounts the Socket.IO ASGI app alongside Django.
-
-URL routing:
-  /socket.io/*   → python-socketio (Socket.IO engine)
-  /*             → Django (REST API, admin, static)
-
-Run with uvicorn:
-  uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --workers 4
-
-For production with gunicorn + uvicorn workers:
-  gunicorn config.asgi:application \
-      -k uvicorn.workers.UvicornWorker \
-      --workers 4 \
-      --bind 0.0.0.0:8000 \
-      --timeout 120
-"""
-
+#core/asgi.py
 import os
 import django
 from django.core.asgi import get_asgi_application
