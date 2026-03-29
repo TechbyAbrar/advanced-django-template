@@ -1,0 +1,310 @@
+{
+  "meta": {
+    "name": "authentication_api_payloads",
+    "version": "1.0.0",
+    "description": "Production-grade payload templates for testing the authentication app endpoints.",
+    "notes": [
+      "Replace placeholder values before use.",
+      "Identifiers are normalized by the backend: phone numbers become E.164, emails/usernames are lowercased.",
+      "OTP purposes allowed by the serializers are: email_verify, phone_verify, password_reset, two_factor.",
+      "Logout and password change require Bearer access token authentication.",
+      "Logout expects a refresh token in the request body."
+    ]
+  },
+  "base_url_examples": {
+    "local": "http://127.0.0.1:8000/api/authentication",
+    "staging": "https://staging.example.com/api/authentication",
+    "production": "https://api.example.com/api/authentication"
+  },
+  "common_headers": {
+    "json": {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    "auth_json": {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      "Authorization": "Bearer <ACCESS_TOKEN>"
+    }
+  },
+  "placeholders": {
+    "email": "user@example.com",
+    "phone": "+8801711000000",
+    "username": "techbyabrar",
+    "password": "StrongPass@123",
+    "new_password": "NewStrongPass@456",
+    "otp": "123456",
+    "refresh_token": "<REFRESH_TOKEN>",
+    "access_token": "<ACCESS_TOKEN>"
+  },
+  "endpoints": {
+    "signup_email_minimal": {
+      "method": "POST",
+      "path": "/signup/",
+      "body": {
+        "email": "user@example.com",
+        "password": "StrongPass@123"
+      }
+    },
+    "signup_phone_minimal": {
+      "method": "POST",
+      "path": "/signup/",
+      "body": {
+        "phone": "+8801711000000",
+        "password": "StrongPass@123"
+      }
+    },
+    "signup_email_and_phone": {
+      "method": "POST",
+      "path": "/signup/",
+      "body": {
+        "email": "user@example.com",
+        "phone": "+8801711000000",
+        "password": "StrongPass@123"
+      }
+    },
+    "login_with_email": {
+      "method": "POST",
+      "path": "/login/",
+      "body": {
+        "identifier": "user@example.com",
+        "password": "StrongPass@123"
+      }
+    },
+    "login_with_phone": {
+      "method": "POST",
+      "path": "/login/",
+      "body": {
+        "identifier": "+8801711000000",
+        "password": "StrongPass@123"
+      }
+    },
+    "login_with_username": {
+      "method": "POST",
+      "path": "/login/",
+      "body": {
+        "identifier": "techbyabrar",
+        "password": "StrongPass@123"
+      }
+    },
+    "logout": {
+      "method": "POST",
+      "path": "/logout/",
+      "headers": "auth_json",
+      "body": {
+        "refresh": "<REFRESH_TOKEN>"
+      }
+    },
+    "otp_send_email_verify": {
+      "method": "POST",
+      "path": "/otp/send/",
+      "body": {
+        "identifier": "user@example.com",
+        "purpose": "email_verify"
+      }
+    },
+    "otp_send_phone_verify": {
+      "method": "POST",
+      "path": "/otp/send/",
+      "body": {
+        "identifier": "+8801711000000",
+        "purpose": "phone_verify"
+      }
+    },
+    "otp_send_password_reset": {
+      "method": "POST",
+      "path": "/otp/send/",
+      "body": {
+        "identifier": "user@example.com",
+        "purpose": "password_reset"
+      }
+    },
+    "otp_send_two_factor": {
+      "method": "POST",
+      "path": "/otp/send/",
+      "body": {
+        "identifier": "user@example.com",
+        "purpose": "two_factor"
+      }
+    },
+    "otp_verify_email": {
+      "method": "POST",
+      "path": "/otp/verify/",
+      "body": {
+        "identifier": "user@example.com",
+        "otp": "123456",
+        "purpose": "email_verify"
+      }
+    },
+    "otp_verify_phone": {
+      "method": "POST",
+      "path": "/otp/verify/",
+      "body": {
+        "identifier": "+8801711000000",
+        "otp": "123456",
+        "purpose": "phone_verify"
+      }
+    },
+    "otp_verify_password_reset": {
+      "method": "POST",
+      "path": "/otp/verify/",
+      "body": {
+        "identifier": "user@example.com",
+        "otp": "123456",
+        "purpose": "password_reset"
+      }
+    },
+    "password_change": {
+      "method": "POST",
+      "path": "/password/change/",
+      "headers": "auth_json",
+      "body": {
+        "old_password": "StrongPass@123",
+        "new_password": "NewStrongPass@456"
+      }
+    },
+    "password_reset_request_email": {
+      "method": "POST",
+      "path": "/password/reset/request/",
+      "body": {
+        "identifier": "user@example.com"
+      }
+    },
+    "password_reset_request_phone": {
+      "method": "POST",
+      "path": "/password/reset/request/",
+      "body": {
+        "identifier": "+8801711000000"
+      }
+    },
+    "password_reset_confirm_email": {
+      "method": "POST",
+      "path": "/password/reset/confirm/",
+      "body": {
+        "identifier": "user@example.com",
+        "otp": "123456",
+        "new_password": "NewStrongPass@456"
+      }
+    },
+    "password_reset_confirm_phone": {
+      "method": "POST",
+      "path": "/password/reset/confirm/",
+      "body": {
+        "identifier": "+8801711000000",
+        "otp": "123456",
+        "new_password": "NewStrongPass@456"
+      }
+    }
+  },
+  "negative_tests": {
+    "signup_missing_identifier": {
+      "method": "POST",
+      "path": "/signup/",
+      "body": {
+        "password": "StrongPass@123"
+      }
+    },
+    "signup_missing_password": {
+      "method": "POST",
+      "path": "/signup/",
+      "body": {
+        "email": "user@example.com"
+      }
+    },
+    "signup_invalid_phone": {
+      "method": "POST",
+      "path": "/signup/",
+      "body": {
+        "phone": "01711000000",
+        "password": "StrongPass@123"
+      }
+    },
+    "signup_numeric_only_password": {
+      "method": "POST",
+      "path": "/signup/",
+      "body": {
+        "email": "user@example.com",
+        "password": "12345678"
+      }
+    },
+    "login_wrong_password": {
+      "method": "POST",
+      "path": "/login/",
+      "body": {
+        "identifier": "user@example.com",
+        "password": "WrongPass123"
+      }
+    },
+    "logout_missing_refresh": {
+      "method": "POST",
+      "path": "/logout/",
+      "headers": "auth_json",
+      "body": {}
+    },
+    "otp_send_invalid_purpose": {
+      "method": "POST",
+      "path": "/otp/send/",
+      "body": {
+        "identifier": "user@example.com",
+        "purpose": "signup"
+      }
+    },
+    "otp_verify_non_numeric": {
+      "method": "POST",
+      "path": "/otp/verify/",
+      "body": {
+        "identifier": "user@example.com",
+        "otp": "12ab56",
+        "purpose": "email_verify"
+      }
+    },
+    "password_change_same_password": {
+      "method": "POST",
+      "path": "/password/change/",
+      "headers": "auth_json",
+      "body": {
+        "old_password": "StrongPass@123",
+        "new_password": "StrongPass@123"
+      }
+    },
+    "password_reset_confirm_non_numeric_otp": {
+      "method": "POST",
+      "path": "/password/reset/confirm/",
+      "body": {
+        "identifier": "user@example.com",
+        "otp": "12ab56",
+        "new_password": "NewStrongPass@456"
+      }
+    }
+  },
+  "expected_behavior_notes": {
+    "signup": [
+      "Requires at least one of email or phone and requires password.",
+      "If email is supplied, verification_channel becomes email and an email_verify OTP is created.",
+      "If only phone is supplied, verification_channel becomes phone and a phone_verify OTP is created."
+    ],
+    "login": [
+      "identifier may be email, phone, or username.",
+      "Returns user_id, username, is_verified, and tokens on success."
+    ],
+    "otp_send": [
+      "Silently returns success even when the identifier does not exist.",
+      "Uses email/phone lookup only, not username lookup."
+    ],
+    "otp_verify": [
+      "Requires identifier, otp, and purpose.",
+      "For email_verify and phone_verify, successful verification updates is_verified=True."
+    ],
+    "password_change": [
+      "Requires authenticated user.",
+      "Returns detail and what appears to be only a new access token under tokens."
+    ],
+    "password_reset_request": [
+      "Silently returns success even when the identifier does not exist."
+    ],
+    "password_reset_confirm": [
+      "Requires identifier, otp, and new_password.",
+      "Consumes password_reset OTP and updates password atomically."
+    ]
+  }
+}
