@@ -82,40 +82,6 @@ def _normalize_identifier(value: str) -> str:
 
     return stripped.lower()                             # email or username
 
-
-# =============================================================================
-# REGISTER
-# =============================================================================
-
-# class RegisterSerializer(serializers.Serializer):
-#     email    = serializers.EmailField(
-#         required=False,
-#     )
-#     phone    = serializers.CharField(
-#         required=False,
-#         max_length=16,
-#         trim_whitespace=True,
-#     )
-#     password = serializers.CharField(
-#         write_only=True,
-#         min_length=8,
-#         max_length=128,
-#         trim_whitespace=False,                          # never trim passwords
-#     )
-
-#     def validate_phone(self, value: str) -> str:
-#         return _validate_phone_format(value)
-
-#     def validate_password(self, value: str) -> str:
-#         return _validate_password_strength(value)
-
-#     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
-#         if not attrs.get("email") and not attrs.get("phone"):
-#             raise serializers.ValidationError(
-#                 "At least one of email or phone is required."
-#             )
-#         return attrs
-
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     phone = serializers.CharField(
@@ -175,7 +141,7 @@ class LoginSerializer(serializers.Serializer):
 
 
 # =============================================================================
-# OTP
+# OTP Functions (send/verify)
 # =============================================================================
 
 class OTPSendSerializer(serializers.Serializer):
