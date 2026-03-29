@@ -1,0 +1,300 @@
+import json
+from pathlib import Path
+
+payload = {
+    "meta": {
+        "project": "chat_api_postman_payload_templates",
+        "version": "1.0.0",
+        "description": "Production-grade request templates for chat REST APIs. Replace placeholder values before use.",
+        "notes": [
+            "All endpoints require Bearer authentication unless your environment handles auth automatically.",
+            "UUIDs, user IDs, and tokens below are placeholders.",
+            "For attachment upload, use multipart/form-data in Postman; JSON here documents the expected fields.",
+            "Message creation is not exposed as a REST POST endpoint in the shared views; message listing is GET only.",
+            "Participant add endpoint only uses user_id; extra fields shown in some serializers are not consumed by the current view."
+        ]
+    },
+    "common_headers": {
+        "Authorization": "Bearer <access_token>",
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    },
+    "base_url_examples": {
+        "local": "http://127.0.0.1:8000/api/chat",
+        "staging": "https://staging.example.com/api/chat",
+        "production": "https://api.example.com/api/chat"
+    },
+    "placeholders": {
+        "conversation_uuid": "11111111-2222-3333-4444-555555555555",
+        "message_uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "before_message_uuid": "99999999-8888-7777-6666-555555555555",
+        "user_id_single": 2,
+        "user_ids_group": [2, 3, 4],
+        "remove_user_id": 5
+    },
+    "endpoints": {
+        "list_conversations": {
+            "method": "GET",
+            "path": "/conversations/",
+            "query_params": {},
+            "body": None,
+            "postman_notes": [
+                "Returns all active conversations for the authenticated user.",
+                "No request body."
+            ]
+        },
+        "create_direct_conversation_minimal": {
+            "method": "POST",
+            "path": "/conversations/",
+            "body": {
+                "type": "direct",
+                "user_ids": [2]
+            }
+        },
+        "create_direct_conversation_full": {
+            "method": "POST",
+            "path": "/conversations/",
+            "body": {
+                "type": "direct",
+                "name": "",
+                "description": "",
+                "user_ids": [2]
+            },
+            "validation_notes": [
+                "Direct conversation requires exactly one other user ID."
+            ]
+        },
+        "create_group_conversation_minimal": {
+            "method": "POST",
+            "path": "/conversations/",
+            "body": {
+                "type": "group",
+                "name": "Backend Team",
+                "user_ids": [2, 3]
+            }
+        },
+        "create_group_conversation_full": {
+            "method": "POST",
+            "path": "/conversations/",
+            "body": {
+                "type": "group",
+                "name": "Backend Team",
+                "description": "Discussion for backend development and releases",
+                "user_ids": [2, 3, 4]
+            },
+            "validation_notes": [
+                "Group conversation requires a non-empty name."
+            ]
+        },
+        "get_conversation_detail": {
+            "method": "GET",
+            "path": "/conversations/{conversation_uuid}/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "body": None
+        },
+        "update_group_conversation_name_only": {
+            "method": "PATCH",
+            "path": "/conversations/{conversation_uuid}/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "body": {
+                "name": "Backend Platform Team"
+            },
+            "validation_notes": [
+                "Only active admins can update.",
+                "Only group conversations can be updated."
+            ]
+        },
+        "update_group_conversation_description_only": {
+            "method": "PATCH",
+            "path": "/conversations/{conversation_uuid}/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "body": {
+                "description": "Updated description for coordination and release planning"
+            }
+        },
+        "update_group_conversation_full": {
+            "method": "PATCH",
+            "path": "/conversations/{conversation_uuid}/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "body": {
+                "name": "Backend Platform Team",
+                "description": "Updated description for coordination and release planning"
+            }
+        },
+        "archive_or_leave_conversation": {
+            "method": "DELETE",
+            "path": "/conversations/{conversation_uuid}/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "body": None,
+            "postman_notes": [
+                "Soft leave/archive for current participant.",
+                "No request body."
+            ]
+        },
+        "list_messages_default": {
+            "method": "GET",
+            "path": "/conversations/{conversation_uuid}/messages/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "query_params": {},
+            "body": None
+        },
+        "list_messages_with_limit": {
+            "method": "GET",
+            "path": "/conversations/{conversation_uuid}/messages/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "query_params": {
+                "limit": 20
+            },
+            "body": None
+        },
+        "list_messages_with_cursor": {
+            "method": "GET",
+            "path": "/conversations/{conversation_uuid}/messages/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "query_params": {
+                "before": "99999999-8888-7777-6666-555555555555",
+                "limit": 50
+            },
+            "body": None
+        },
+        "upload_attachment_multipart_reference": {
+            "method": "POST",
+            "path": "/messages/{message_uuid}/attachments/",
+            "path_params": {
+                "message_uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+            },
+            "content_type": "multipart/form-data",
+            "form_data": {
+                "file": "<attach file from Postman>"
+            },
+            "postman_notes": [
+                "Do not send JSON for this endpoint.",
+                "Server infers attachment_type from MIME type.",
+                "Max size is 50 MB.",
+                "Authenticated user must be the sender of the message."
+            ]
+        },
+        "add_participant_minimal": {
+            "method": "POST",
+            "path": "/conversations/{conversation_uuid}/participants/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "body": {
+                "user_id": 5
+            },
+            "validation_notes": [
+                "Only active admins can add participants."
+            ]
+        },
+        "add_participant_with_ignored_extra_fields": {
+            "method": "POST",
+            "path": "/conversations/{conversation_uuid}/participants/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555"
+            },
+            "body": {
+                "user_id": 5,
+                "role": "member",
+                "nickname": "Abrar",
+                "is_muted": False
+            },
+            "postman_notes": [
+                "Current view only uses user_id.",
+                "Extra fields are ignored by the endpoint."
+            ]
+        },
+        "remove_participant": {
+            "method": "DELETE",
+            "path": "/conversations/{conversation_uuid}/participants/{user_id}/",
+            "path_params": {
+                "conversation_uuid": "11111111-2222-3333-4444-555555555555",
+                "user_id": 5
+            },
+            "body": None,
+            "validation_notes": [
+                "Only active admins can remove participants."
+            ]
+        },
+        "search_messages_keyword": {
+            "method": "GET",
+            "path": "/search/",
+            "query_params": {
+                "q": "hello"
+            },
+            "body": None
+        },
+        "search_messages_phrase": {
+            "method": "GET",
+            "path": "/search/",
+            "query_params": {
+                "q": "backend deployment"
+            },
+            "body": None
+        },
+        "search_messages_empty_query": {
+            "method": "GET",
+            "path": "/search/",
+            "query_params": {
+                "q": ""
+            },
+            "body": None,
+            "postman_notes": [
+                "Returns empty list and count 0."
+            ]
+        }
+    },
+    "negative_test_payloads": {
+        "create_direct_invalid_multiple_user_ids": {
+            "method": "POST",
+            "path": "/conversations/",
+            "body": {
+                "type": "direct",
+                "user_ids": [2, 3]
+            }
+        },
+        "create_group_invalid_missing_name": {
+            "method": "POST",
+            "path": "/conversations/",
+            "body": {
+                "type": "group",
+                "user_ids": [2, 3]
+            }
+        },
+        "messages_invalid_limit_string": {
+            "method": "GET",
+            "path": "/conversations/{conversation_uuid}/messages/",
+            "query_params": {
+                "limit": "abc"
+            }
+        },
+        "messages_invalid_limit_zero": {
+            "method": "GET",
+            "path": "/conversations/{conversation_uuid}/messages/",
+            "query_params": {
+                "limit": 0
+            }
+        },
+        "add_participant_missing_user_id": {
+            "method": "POST",
+            "path": "/conversations/{conversation_uuid}/participants/",
+            "body": {}
+        }
+    }
+}
