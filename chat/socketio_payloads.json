@@ -1,0 +1,235 @@
+{
+  "meta": {
+    "name": "socketio_apidog_payloads",
+    "version": "1.0.0",
+    "description": "Production-grade Socket.IO payload templates for Apidog testing based on the current chat/sio_server.py implementation.",
+    "notes": [
+      "Use a Socket.IO request in Apidog, not a plain WebSocket request.",
+      "Base URL should be the host only, for example: http://127.0.0.1:8004",
+      "Socket.IO path should be set separately as: /socket.io",
+      "Preferred authentication is handshake auth with auth.token.",
+      "If you do not authenticate during connect, emit authenticate within 10 seconds.",
+      "Replace all placeholder UUIDs, tokens, and IDs before testing.",
+      "Event names below match the actual @sio.event handler names in the server code."
+    ]
+  },
+  "connection": {
+    "base_url": "http://127.0.0.1:8004",
+    "socketio_path": "/socket.io",
+    "handshake_auth": {
+      "token": "<JWT_ACCESS_TOKEN>"
+    },
+    "fallback_auth_event": {
+      "event": "authenticate",
+      "payload": {
+        "token": "<JWT_ACCESS_TOKEN>"
+      }
+    }
+  },
+  "placeholders": {
+    "conversation_id": "11111111-2222-3333-4444-555555555555",
+    "message_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    "reply_to_id": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+    "client_message_id": "apidog-msg-001"
+  },
+  "client_to_server_events": [
+    {
+      "event": "authenticate",
+      "purpose": "Authenticate the socket after connect when handshake auth was not used.",
+      "payload": {
+        "token": "<JWT_ACCESS_TOKEN>"
+      }
+    },
+    {
+      "event": "conversation_join",
+      "purpose": "Join a conversation room and receive missed messages if applicable.",
+      "payload": {
+        "conversation_id": "11111111-2222-3333-4444-555555555555"
+      }
+    },
+    {
+      "event": "conversation_leave",
+      "purpose": "Leave a conversation room without leaving the conversation in the database.",
+      "payload": {
+        "conversation_id": "11111111-2222-3333-4444-555555555555"
+      }
+    },
+    {
+      "event": "message_send",
+      "purpose": "Send a standard text message.",
+      "payload": {
+        "conversation_id": "11111111-2222-3333-4444-555555555555",
+        "body": "Hello from Apidog",
+        "message_type": "text",
+        "client_message_id": "apidog-msg-001",
+        "reply_to_id": null
+      }
+    },
+    {
+      "event": "message_send_reply",
+      "purpose": "Send a reply to an existing message.",
+      "payload": {
+        "conversation_id": "11111111-2222-3333-4444-555555555555",
+        "body": "Replying to your message",
+        "message_type": "text",
+        "client_message_id": "apidog-msg-002",
+        "reply_to_id": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+      }
+    },
+    {
+      "event": "message_read",
+      "purpose": "Mark messages as read in a conversation.",
+      "payload": {
+        "conversation_id": "11111111-2222-3333-4444-555555555555",
+        "message_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+      }
+    },
+    {
+      "event": "message_edit",
+      "purpose": "Edit a message owned by the authenticated user.",
+      "payload": {
+        "message_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "body": "Edited message body"
+      }
+    },
+    {
+      "event": "message_delete",
+      "purpose": "Soft delete a message owned by the authenticated user.",
+      "payload": {
+        "message_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+      }
+    },
+    {
+      "event": "typing_start",
+      "purpose": "Broadcast typing indicator to other users in the room.",
+      "payload": {
+        "conversation_id": "11111111-2222-3333-4444-555555555555"
+      }
+    },
+    {
+      "event": "typing_stop",
+      "purpose": "Stop typing indicator and revert to online/offline presence.",
+      "payload": {
+        "conversation_id": "11111111-2222-3333-4444-555555555555"
+      }
+    },
+    {
+      "event": "reaction_add",
+      "purpose": "Add an emoji reaction to a message.",
+      "payload": {
+        "message_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "emoji": "\ud83d\udd25"
+      }
+    },
+    {
+      "event": "reaction_remove",
+      "purpose": "Remove an emoji reaction from a message.",
+      "payload": {
+        "message_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "conversation_id": "11111111-2222-3333-4444-555555555555",
+        "emoji": "\ud83d\udd25"
+      }
+    }
+  ],
+  "server_to_client_events_to_listen": [
+    "authenticated",
+    "message:ack",
+    "message:new",
+    "message:missed",
+    "message:updated",
+    "receipt:update",
+    "reaction:update",
+    "presence:change",
+    "unread:update",
+    "conversation:new",
+    "error"
+  ],
+  "apidog_test_flows": [
+    {
+      "name": "connect_and_join",
+      "steps": [
+        {
+          "action": "connect",
+          "config": {
+            "base_url": "http://127.0.0.1:8004",
+            "socketio_path": "/socket.io",
+            "handshake_auth": {
+              "token": "<JWT_ACCESS_TOKEN>"
+            }
+          }
+        },
+        {
+          "action": "emit",
+          "event": "conversation_join",
+          "payload": {
+            "conversation_id": "11111111-2222-3333-4444-555555555555"
+          }
+        }
+      ]
+    },
+    {
+      "name": "send_text_message",
+      "steps": [
+        {
+          "action": "emit",
+          "event": "message_send",
+          "payload": {
+            "conversation_id": "11111111-2222-3333-4444-555555555555",
+            "body": "Hello from Apidog",
+            "message_type": "text",
+            "client_message_id": "apidog-msg-001",
+            "reply_to_id": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "mark_read",
+      "steps": [
+        {
+          "action": "emit",
+          "event": "message_read",
+          "payload": {
+            "conversation_id": "11111111-2222-3333-4444-555555555555",
+            "message_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+          }
+        }
+      ]
+    }
+  ],
+  "negative_tests": [
+    {
+      "name": "missing_conversation_id_on_send",
+      "event": "message_send",
+      "payload": {
+        "body": "Missing conversation_id"
+      },
+      "expected_error": {
+        "code": "VALIDATION",
+        "message": "conversation_id required"
+      }
+    },
+    {
+      "name": "join_without_membership",
+      "event": "conversation_join",
+      "payload": {
+        "conversation_id": "00000000-0000-0000-0000-000000000000"
+      },
+      "expected_error": {
+        "code": "FORBIDDEN",
+        "message": "Not a participant"
+      }
+    },
+    {
+      "name": "bad_token_fallback_auth",
+      "event": "authenticate",
+      "payload": {
+        "token": "invalid-token"
+      },
+      "expected_error": {
+        "code": "AUTH_FAILED",
+        "message": "Invalid token"
+      }
+    }
+  ]
+}
