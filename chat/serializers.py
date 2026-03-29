@@ -123,11 +123,6 @@ class ConversationDetailSerializer(ConversationListSerializer):
         msgs = obj.messages.filter(is_deleted=False).order_by("-created_at")[:50]
         return MessageSerializer(reversed(list(msgs)), many=True).data
 
-
-# ---------------------------------------------------------------------------
-# Write serializers
-# ---------------------------------------------------------------------------
-
 class ConversationCreateSerializer(serializers.Serializer):
     type        = serializers.ChoiceField(choices=["direct", "group"])
     name        = serializers.CharField(max_length=255, required=False, allow_blank=True)
